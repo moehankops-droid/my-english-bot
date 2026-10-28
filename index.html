@@ -30,7 +30,6 @@ async function loadAIQuestion() {
     const container = document.getElementById("quiz-container");
     container.innerHTML = "<p>⏳ Gemini AI က မေးခွန်းထုတ်နေပါပြီ၊ ခဏစောင့်ပါ...</p>";
 
-    // ဒီနေရာမှာ မင်းအခုရလာတဲ့ Google AI Studio API Key ကို ထည့်ပါ
     const apiKey = "AIzaSyAb8RN6ls6S8Yr97nANGSNtBzrPNXa7jXkXWacvIR2ynlX8Q-5g"; 
 
     try {
@@ -42,22 +41,35 @@ async function loadAIQuestion() {
             body: JSON.stringify({
                 contents: [{
                     parts: [{
-                        text: "Create a multiple-choice English grammar question for Grade 8 students. Return ONLY a valid JSON object with keys: question, options (array of 4 strings), and answer (the correct option string)."
+                        text: "Generate a multiple-choice English grammar question for Grade 8. You MUST output ONLY raw JSON without any markdown formatting, using exactly this structure: {\"question\": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"answer\": \"Correct Option\"}"
                     }]
                 }]
             })
         });
 
         const data = await response.json();
+        
+        if (!data.candidates || data.candidates.length === 0) {
+            throw new Error("AI response error");
+        }
+
         let rawText = data.candidates[0].content.parts[0].text;
         
-        // JSON စာသားကို သန့်စင်ခြင်း
-        rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+        // JSON စာသားကို သန့်စင်ခြင်း (Markdown ပုံစံများကို ဖယ်ရှားရန်)
+        rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+        
+        // ပထမနဲ့ နောက်ဆုံး curly braces တွေကိုသာ ဖြတ်ထုတ်ရန်
+        const jsonStart = rawText.indexOf('{');
+        const jsonEnd = rawText.lastIndexOf('}');
+        if (jsonStart !== -1 && jsonEnd !== -1) {
+            rawText = rawText.substring(jsonStart, jsonEnd + 1);
+        }
+
         const quizData = JSON.parse(rawText);
 
         let optionsHTML = "";
         quizData.options.forEach(opt => {
-            optionsHTML += `<button onclick="checkAnswer('${opt}', '${quizData.answer}')">${opt}</button>`;
+            optionsHTML += `<button onclick="checkAnswer('${opt.replace(/'/g, "\\'")}', '${quizData.answer.replace(/'/g, "\\'")}')">${opt}</button>`;
         });
 
         container.innerHTML = `
@@ -65,7 +77,8 @@ async function loadAIQuestion() {
             <div class="options">${optionsHTML}</div>
         `;
     } catch (error) {
-        container.innerHTML = `<p style="color: red;">❌ မေးခွန်းထုတ်ယူရာတွင် အမှားအယွင်းရှိပါသည် (VPN သို့မဟုတ် API Key စစ်ပါ)</p><button onclick="loadAIQuestion()">ပြန်ကြိုးစားရန်</button>`;
+        console.error(error);
+        container.innerHTML = `<p style="color: red;">❌ မေးခွန်းထုတ်ယူရာတွင် အမှားအယွင်းရှိပါသည် (VPN သို့မဟုတ် API Connection စစ်ပါ)</p><button onclick="loadAIQuestion()">ပြန်ကြိုးစားရန်</button>`;
     }
 }
 
