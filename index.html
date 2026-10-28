@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sayar Yi English Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --primary-color: #58cc02;
+            --primary-hover: #46a302;
+            --bg-color: #f7f7f7;
+            --card-bg: #ffffff;
+            --text-color: #3c3c3c;
+            --border-color: #e5e5e5;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        h2 {
+            text-align: center;
+            color: var(--primary-color);
+        }
+        .card {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+        .option-btn {
+            background-color: #ffffff;
+            color: var(--text-color);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            width: 100%;
+            text-align: left;
+            margin-top: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+        .option-btn:hover {
+            background-color: #f0f0f0;
+            border-color: var(--primary-color);
+        }
+        .hidden {
+            display: none;
+        }
+        .tip-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f9f9f9;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔥 ဆရာရီ English & Life App</h2>
+        
+        <!-- Main Menu Card -->
+        <div id="main-menu" class="card">
+            <button class="btn" onclick="showQuiz()">🎮 ဉာဏ်စမ်း Quiz စမည် (Duolingo Style)</button>
+            <button class="btn" style="background-color: #2b82c9;" onclick="showTips()">💪 နေထိုင်နည်း (၆) ချက် ဖတ်ရန်</button>
+        </div>
+
+        <!-- Quiz Section -->
+        <div id="quiz-section" class="card hidden">
+            <h3 id="question-text">Loading question...</h3>
+            <div id="options-container"></div>
+            <p id="quiz-feedback" style="font-weight: bold; margin-top: 10px;"></p>
+            <button class="btn hidden" id="next-btn" onclick="loadQuiz()">နောက်မေးခွန်း ➡️</button>
+            <button class="btn" style="background-color: #888; margin-top: 10px;" onclick="showMenu()">🏠 ပင်မ မီနူးသို့</button>
+        </div>
+
+        <!-- Tips Section -->
+        <div id="tips-section" class="card hidden">
+            <h3>💪 Confidence & Anti-Bullying (နေထိုင်နည်း ၆ ချက်)</h3>
+            <div class="tip-item">၁။ အပေါင်းအသင်းမကောင်းသူများကို ရှောင်ပါ (တန်ဖိုးရှိအချိန်များ မပျက်စီးစေရန်)[cite: 4]</div>
+            <div class="tip-item">၂။ စကားကို လိုတာထက် ပိုမပြောပါနဲ့ (စကားများလျှင် အမှားပါနိုင်သည်)[cite: 8]</div>
+            <div class="tip-item">၃။ လျစ်လျူရှုတတ်အောင် နေထိုင်ပါ[cite: 7]</div>
+            <div class="tip-item">၄။ ပျာယာခတ်တတ်သည့် အကျင့်ရှိရင် ပြင်ပါ[cite: 3]</div>
+            <div class="tip-item">၅။ စိတ်ဓာတ်မာကျောအောင် လေ့ကျင့်ပါ[cite: 6]</div>
+            <div class="tip-item">၆။ ပတ်ဝန်းကျင်စကားကို ခေါင်းထဲမထည့်ပါနဲ့[cite: 9]</div>
+            <button class="btn" style="margin-top: 15px;" onclick="showMenu()">🏠 ပင်မ မီနူးသို့</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const quizzes = [
+            {
+                q: "Which tense is used for an action happening right now?",
+                options: ["Present Simple", "Present Continuous", "Past Simple", "Future Simple"],
+                answer: 1,
+                explanation: "မှန်ပါတယ်! လက်ရှိဖြစ်ပျက်နေတဲ့ အလုပ်တွေအတွက် Present Continuous (is/am/are + verb-ing) ကို သုံးရတယ်ကွ။"
+            },
+            {
+                q: "Choose the correct passive voice: 'She writes a letter.'",
+                options: ["A letter is written by her.", "A letter was written by her.", "A letter is writing by her.", "She is written a letter."],
+                answer: 0,
+                explanation: "မှန်တယ် သူငယ်ချင်း! Present Simple passive အတွက် is written ကို သုံးရတယ်။"
+            }
+        ];
+
+        let currentQuizIndex = 0;
+
+        function showMenu() {
+            document.getElementById('main-menu').classList.remove('hidden');
+            document.getElementById('quiz-section').classList.add('hidden');
+            document.getElementById('tips-section').classList.add('hidden');
+        }
+
+        function showQuiz() {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('quiz-section').classList.remove('hidden');
+            document.getElementById('tips-section').classList.add('hidden');
+            loadQuiz();
+        }
+
+        function showTips() {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('quiz-section').classList.add('hidden');
+            document.getElementById('tips-section').classList.remove('hidden');
+        }
+
+        function loadQuiz() {
+            const q = quizzes[currentQuizIndex];
+            document.getElementById('question-text').innerText = `Q: ${q.q}`;
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            document.getElementById('quiz-feedback').innerText = '';
+            document.getElementById('next-btn').classList.add('hidden');
+
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(index, q.answer, q.explanation);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, correct, explanation) {
+            const feedback = document.getElementById('quiz-feedback');
+            if (selected === correct) {
+                feedback.style.color = '#58cc02';
+                feedback.innerText = `🎉 အမှန်ပဲ သူငယ်ချင်း! ${explanation}`;
+            } else {
+                feedback.style.color = '#ea2b2b';
+                feedback.innerText = `❌ မှားတယ်ကွ။ ${explanation}`;
+            }
+            document.getElementById('next-btn').classList.remove('hidden');
+            currentQuizIndex = (currentQuizIndex + 1) % quizzes.length;
+        }
+    </script>
+</body>
+</html>
